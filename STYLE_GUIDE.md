@@ -112,6 +112,66 @@ Pick **one** icon set for the entire ecosystem. Do not mix icon families.
 
 ---
 
+## 4. Project Identifier
+
+### 4.1 Formal Name
+
+The suite is formally named **free open tools** — three words, lowercase, no hyphens or underscores. Use the full formal name in prose, headings, and any copy where the project is introduced or described.
+
+### 4.2 Stylized Abbreviation
+
+When space is tight or a compact identifier is needed, the project is stylized as a single run-on word:
+
+**freeopentools**
+
+with the following color treatment:
+
+| Segment | Color Token |
+|---|---|
+| `free` | `--color-text` (light/dark theme text color) |
+| `open` | `--color-accent` (`#2563EB`) |
+| `tools` | `--color-text` (light/dark theme text color) |
+
+```html
+<div class="logo-text">free<span>open</span>tools</div>
+```
+
+```css
+.logo-text {
+  color: var(--color-text);
+  font-weight: 700;
+}
+.logo-text span {
+  color: var(--color-accent);
+}
+```
+
+The middle segment (`open`) in blue creates a recognizable visual anchor that ties the identifier to the ecosystem's single accent color.
+
+### 4.3 Usage Rules
+
+| Context | Form | Example |
+|---|---|---|
+| Page title / heading | Formal | Free Open Tools |
+| Navigation / logo | Stylized | free<span>open</span>tools |
+| URL / domain | Compact | freeopentools.com |
+| Social / brand references | Formal | Free Open Tools |
+| Inline mentions in copy | Formal | "a collection of free open tools" |
+
+- The stylized form (`freeopentools` with blue `open`) is reserved for the project's own UI — it is the mark, not the name. Do not use it as a prose substitute in paragraphs.
+- In code, config, and file paths, use the all-lowercase compact form `freeopentools` (no color treatment).
+- Never hyphenate or capitalize individual segments in the run-on form (e.g., not `FreeOpenTools`, `free-open-tools`, or `FREEOPENTOOLS`).
+
+### 4.4 Etymology
+
+The name reflects two core principles:
+- **free** — no cost, no sign-up, no tracking, no gatekeeping
+- **open** — source code is public, inspectable, forkable, improvable
+
+The tools themselves are the artifact. The name puts the principles before the product.
+
+---
+
 ## 5. Typography
 
 ### 5.1 Typeface
@@ -217,11 +277,14 @@ Rules:
 - Consistent padding (`--space-5`), corner radius (`--radius-md`), and border (`1px solid var(--color-border)`).
 - Hover state on interactive cards: subtle elevation (`--shadow-md`) and/or a 1px accent border — not a full color change.
 
-### 7.4 Navigation
+### 7.4 Project Attribution
 
-- Every tool includes a small, consistent header with: the Free Open Tools mark/logo (linking back to the directory), the current tool's name, and a light/dark theme toggle.
-- No nested menus, mega-menus, or hover-triggered dropdowns on touch-incompatible triggers. Keep navigation flat.
-- A visible "back to all tools" link/breadcrumb is present on every tool page.
+Each tool is an independent application. It should not feel like a sub-page of the directory — it should feel like its own product. That said, every tool must include a small, unobtrusive attribution that connects it back to the project and its author.
+
+- Every tool includes a small, consistent footer or corner attribution with: the tool's name, the Free Open Tools mark, and a link to `benjaminbarlow.com`.
+- No "back to all tools" links, breadcrumbs, or directory nav. Each tool stands on its own.
+- No nested menus, mega-menus, or hover-triggered dropdowns. Keep navigation flat.
+- The attribution must be visible but not intrusive — small text, muted color, unobtrusive placement (bottom corner or below the fold).
 
 ### 7.5 Feedback & States
 
@@ -360,7 +423,7 @@ Because simplicity includes speed:
 - [ ] No layout breakage at 320px width or 200% browser zoom
 - [ ] One clear primary action; no competing CTAs
 - [ ] No unnecessary dependencies, trackers, or dark patterns
-- [ ] Links back to the Free Open Tools directory
+- [ ] Includes a small, unobtrusive project attribution (tool name, Free Open Tools mark, link to benjaminbarlow.com)
 
 ---
 
