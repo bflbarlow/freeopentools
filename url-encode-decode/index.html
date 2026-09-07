@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>URL Encode / Decode — Free Open Tools</title>
+  <meta name="description" content="Percent-encode or decode URLs, query strings, and form data instantly in your browser. No server, no tracking.">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <script>
+    (function () {
+      var saved = localStorage.getItem('theme');
+      var theme = saved || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+      document.documentElement.setAttribute('data-theme', theme);
+    })();
+  </script>
+  <style>
+    /* ===== Ecosystem Tokens (Free Open Tools Style Guide §2–§6) ===== */
+    :root {
+      --color-accent:        #2563EB;
+      --color-accent-hover:  #1D4ED8;
+      --color-accent-soft:   #2563EB1A;
+      --color-success:       #16A34A;
+      --color-warning:       #D97706;
+      --color-danger:        #DC2626;
+      --space-1: 4px;  --space-2: 8px;  --space-3: 12px;
+      --space-4: 16px; --space-5: 24px; --space-6: 32px;
+      --space-7: 48px; --space-8: 64px;
+      --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+                   "Helvetica Neue", Arial, sans-serif;
+      --font-mono: "SF Mono", "SFMono-Regular", Consolas, "Liberation Mono",
+                   Menlo, monospace;
+      --text-xs: 12px;  --text-sm: 14px;  --text-base: 16px;
+      --text-lg: 18px;  --text-xl: 22px;  --text-2xl: 28px;
+      --radius-sm: 6px;  --radius-md: 10px;  --radius-lg: 16px;
+      --shadow-sm: 0 1px 2px rgba(0,0,0,0.06);
+      --shadow-md: 0 4px 12px rgba(0,0,0,0.10);
+    }
+
+    :root, [data-theme="light"] {
+      --color-bg:            #FFFFFF;
+      --color-bg-subtle:     #F5F5F7;
+      --color-surface:       #FFFFFF;
+      --color-border:        #E2E2E5;
+      --color-text:          #111113;
+      --color-text-muted:    #5B5B63;
+      --color-text-disabled: #9A9AA1;
+    }
+
+    [data-theme="dark"] {
+      --color-bg:            #0E0E10;
+      --color-bg-subtle:     #17171A;
+      --color-surface:       #1C1C20;
+      --color-border:        #2C2C32;
+      --color-text:          #F2F2F3;
+      --color-text-muted:    #A3A3AB;
+      --color-text-disabled: #5B5B63;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      height: 100%;
+      font-family: var(--font-sans);
+      background: var(--color-bg);
+      color: var(--color-text);
+      line-height: 1.6;
+    }
+
+    /* ===== Layout ===== */
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: var(--space-5);
+      width: 100%;
+    }
+
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-1);
+      font-size: var(--text-sm);
+      color: var(--color-text-muted);
+      text-decoration: none;
+      margin-bottom: var(--space-3);
+      transition: color 0.15s;
+    }
+    .back-link:hover { color: var(--color-accent); }
+    .back-link:focus-visible {
+      outline: 2px solid var(--color-accent);
+      outline-offset: 2px;
+      border-radius: var(--radius-sm);
+    }
+    .back-link svg {
+      width: 14px; height: 14px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .page-title {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      font-size: var(--text-xl);
+      font-weight: 700;
+      margin-bottom: var(--space-1);
+    }
+    .page-title svg {
+      width: 20px; height: 20px;
+      stroke: var(--color-accent);
+      fill: none;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .subtitle {
+      font-size: var(--text-sm);
+      color: var(--color-text-muted);
+      margin-bottom: var(--space-5);
+    }
+
+    /* ===== Tool area ===== */
+    .tool-area {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-4);
+    }
+
+    .input-group {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-2);
+    }
+
+    .input-label {
+      font-size: var(--text-sm);
+      font-weight: 600;
+      color: var(--color-text);
+    }
+
+    .mini-input {
+      width: 100%;
+      min-height: 100px;
+      padding: var(--space-3);
+      border: 1px solid var(--color-border-input, var(--color-border));
+      border-radius: var(--radius-sm);
+      background: var(--color-bg-subtle);
+      color: var(--color-text);
+      font-family: var(--font-mono);
+      font-size: 16px;
+      line-height: 1.5;
+      resize: vertical;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .mini-input:focus {
+      border-color: var(--color-accent);
+      outline: none;
+      box-shadow: 0 0 0 2px var(--color-accent-soft);
+    }
+    .mini-input::placeholder {
+      color: var(--color-text-disabled);
+    }
+
+    .mini-input.output {
+      background: var(--color-input-bg, var(--color-surface));
+      cursor: text;
+      user-select: all;
+    }
+
+    .btn-row {
+      display: flex;
+      gap: var(--space-2);
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      padding: var(--space-2) var(--space-4);
+      font-size: 16px;
+      font-weight: 600;
+      font-family: var(--font-sans);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-sm);
+      background: var(--color-surface);
+      color: var(--color-text);
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s, color 0.15s;
+      min-height: 44px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--space-1);
+      user-select: none;
+    }
+    .btn:hover { background: var(--color-bg-subtle); }
+    .btn:active { transform: scale(0.97); }
+    .btn:focus-visible {
+      outline: 2px solid var(--color-accent);
+      outline-offset: 2px;
+    }
+
+    .btn-primary {
+      background: var(--color-accent);
+      border-color: var(--color-accent);
+      color: #fff;
+    }
+    .btn-primary:hover { background: var(--color-accent-hover); }
+
+    .btn-copy {
+      align-self: flex-start;
+      padding: var(--space-1) var(--space-3);
+      font-size: var(--text-sm);
+      min-height: 36px;
+    }
+
+    .btn-copy.copied {
+      background: var(--color-success);
+      border-color: var(--color-success);
+      color: #fff;
+    }
+
+    /* ===== Status message ===== */
+    .status {
+      font-size: var(--text-sm);
+      color: var(--color-text-muted);
+      min-height: 1.5em;
+    }
+
+    .status.error {
+      color: var(--color-danger);
+    }
+
+    .status.success {
+      color: var(--color-success);
+    }
+
+    /* ===== Char count ===== */
+    .char-count {
+      font-size: var(--text-xs);
+      color: var(--color-text-disabled);
+      text-align: right;
+      margin-top: var(--space-1);
+    }
+
+/* ===== Responsive ===== */
+    @media (max-width: 480px) {
+      .container { padding: var(--space-3); }
+      .page-title { font-size: var(--text-lg); }
+      .btn-row { flex-direction: column; }
+      .btn-row .btn { width: 100%; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <a class="back-link" href="https://freeopentools.com" aria-label="Back to Free Open Tools">
+    <svg viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+    Free Open Tools
+  </a>
+
+  <div class="page-title">
+    <svg viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+    URL Encode / Decode
+  </div>
+  <p class="subtitle">Percent-encode special characters in URLs or decode percent-encoded strings back to plain text.</p>
+
+  <div class="tool-area">
+    <div class="input-group">
+      <label class="input-label" for="input">Input</label>
+      <textarea
+        id="input"
+        class="mini-input"
+        placeholder="Paste or type text to encode or decode&#10;e.g. hello world → hello%20world"
+        spellcheck="false"
+      ></textarea>
+      <div class="char-count" id="charCount">0 characters</div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" id="btn-encode">Encode</button>
+      <button class="btn btn-primary" id="btn-decode">Decode</button>
+      <button class="btn" id="btn-swap">Swap ↓</button>
+      <button class="btn" id="btn-clear">Clear</button>
+    </div>
+
+    <div class="input-group">
+      <label class="input-label" for="output">Output</label>
+      <textarea
+        id="output"
+        class="mini-input output"
+        placeholder="Result will appear here"
+        readonly
+        spellcheck="false"
+      ></textarea>
+      <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:var(--space-2);">
+        <div class="status" id="status"></div>
+        <button class="btn btn-copy" id="btn-copy">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:2px"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          Copy
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  var input        = document.getElementById('input');
+  var output       = document.getElementById('output');
+  var status       = document.getElementById('status');
+  var charCount    = document.getElementById('charCount');
+  var btnEncode    = document.getElementById('btn-encode');
+  var btnDecode    = document.getElementById('btn-decode');
+  var btnSwap      = document.getElementById('btn-swap');
+  var btnClear     = document.getElementById('btn-clear');
+  var btnCopy      = document.getElementById('btn-copy');
+
+  // ── Update character count ──
+  function updateCharCount() {
+    var len = input.value.length;
+    if (len === 0) { charCount.textContent = '0 characters'; return; }
+    var label = len + ' character' + (len !== 1 ? 's' : '');
+    charCount.textContent = label;
+  }
+  input.addEventListener('input', updateCharCount);
+  updateCharCount();
+
+  // ── Encode ──
+  function encode() {
+    var text = input.value;
+    if (!text) { setStatus('Nothing to encode.', 'error'); return; }
+    try {
+      output.value = encodeURIComponent(text);
+      setStatus('Encoded ' + text.length + ' characters.', 'success');
+    } catch (e) {
+      setStatus('Encoding failed: ' + e.message, 'error');
+    }
+  }
+
+  // ── Decode ──
+  function decode() {
+    var text = input.value;
+    if (!text) { setStatus('Nothing to decode.', 'error'); return; }
+    try {
+      output.value = decodeURIComponent(text);
+      setStatus('Decoded ' + text.length + ' characters.', 'success');
+    } catch (e) {
+      output.value = '';
+      setStatus('Invalid percent-encoding. Check the input for stray % signs.', 'error');
+    }
+  }
+
+  // ── Swap ──
+  function swap() {
+    var tmp = input.value;
+    input.value = output.value;
+    output.value = tmp;
+    updateCharCount();
+    setStatus('Swapped input and output.', 'success');
+  }
+
+  // ── Clear ──
+  function clearAll() {
+    input.value = '';
+    output.value = '';
+    updateCharCount();
+    setStatus('Cleared.', '');
+  }
+
+  // ── Copy ──
+  function copy() {
+    if (!output.value) { setStatus('Nothing to copy.', 'error'); return; }
+    navigator.clipboard.writeText(output.value).then(function () {
+      btnCopy.textContent = 'Copied!';
+      btnCopy.classList.add('copied');
+      setStatus('Copied to clipboard.', 'success');
+      setTimeout(function () {
+        btnCopy.textContent = 'Copy';
+        btnCopy.classList.remove('copied');
+      }, 2000);
+    }).catch(function () {
+      setStatus('Failed to copy. Select the text manually.', 'error');
+    });
+  }
+
+  // ── Status ──
+  function setStatus(msg, type) {
+    status.textContent = msg;
+    status.className = 'status';
+    if (type) status.classList.add(type);
+    // Auto-clear success after 3s
+    if (type === 'success') {
+      clearTimeout(status._timer);
+      status._timer = setTimeout(function () { status.textContent = ''; status.className = 'status'; }, 3000);
+    }
+  }
+
+  // ── Wire buttons ──
+  btnEncode.addEventListener('click', encode);
+  btnDecode.addEventListener('click', decode);
+  btnSwap.addEventListener('click', swap);
+  btnClear.addEventListener('click', clearAll);
+  btnCopy.addEventListener('click', copy);
+
+  // ── Keyboard shortcuts ──
+  input.addEventListener('keydown', function (e) {
+    // Ctrl+Enter / Cmd+Enter to encode
+    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); encode(); }
+  });
+
+  // ── Auto-detect on paste: if input looks already percent-encoded, offer a decode hint ──
+  input.addEventListener('paste', function () {
+    // Brief delay so the paste value is available
+    setTimeout(function () {
+      var val = input.value.trim();
+      if (val.length > 0 && /%[0-9A-Fa-f]{2}/.test(val)) {
+        setStatus('Input contains percent-encoding. Click "Decode" to convert it.', '');
+      }
+    }, 50);
+  });
+
+  // ── Theme sync ──
+  window.addEventListener('storage', function (e) {
+    if (e.key === 'theme' && e.newValue) {
+      document.documentElement.setAttribute('data-theme', e.newValue);
+    }
+  });
+})();
+</script>
+
+</body>
+</html>
