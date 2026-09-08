@@ -1344,9 +1344,142 @@ A collapsible action log lives at the bottom of the properties panel, providing 
 - Renders in `--font-mono` for clear visual distinction from UI text.
 - Uses `aria-live="polite"` on the log body so screen readers announce new entries.
 
-### 8.8 Responsive Behavior
+### 8.8 Tab Bar
 
-The properties panel is hidden on narrow screens to preserve workspace:
+The Properties Pane includes a tab bar for switching between different views of the selected item. The tabs are:
+
+| Tab | Data Attribute | Content |
+|---|---|---|
+| Properties | `data-tab="properties"` | Geometry, text, style, and other property inputs for the selected item |
+| Layers | `data-tab="layers"` | List of all objects in the workspace with visibility toggles and z-order controls |
+
+**Tab bar HTML structure:**
+
+```html
+<div class="panel-tabs">
+    <button class="panel-tab active" data-tab="properties">Properties</button>
+    <button class="panel-tab" data-tab="layers">Layers</button>
+</div>
+```
+
+**Tab behavior:**
+- Only one tab may be active at a time. The active tab has `border-bottom-color: var(--color-accent)` and `color: var(--color-accent)`, while inactive tabs are `--color-text-disabled`.
+- Clicking a tab shows the corresponding content area and hides the other.
+- The tab bar is always visible when the panel is expanded.
+- The tab bar is hidden when the panel is collapsed.
+
+**Tab content visibility:**
+
+```css
+.panel-scroll[data-active-tab="properties"] { display: block; }
+.panel-scroll[data-active-tab="properties"] .panel-layers-content { display: none; }
+.panel-scroll[data-active-tab="layers"] { display: block; }
+.panel-scroll[data-active-tab="layers"] .panel-scroll-inner { display: none; }
+```
+
+### 8.9 Action Log (Audit Trail)
+
+The Action Log provides a real-time, scrollable audit trail of all user actions within the tool. It is a collapsible section at the bottom of the Properties Pane.
+
+**Purpose:**
+- Give users visibility into what actions have been performed.
+- Provide a non-destructive way to review recent changes.
+- Serve as a debugging aid for complex workflows.
+
+**HTML structure:**
+
+```html
+<div class="panel-log">
+    <div class="log-header" id="log-header">
+        <span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="8" y1="6" x2="21" y2="6"/>
+                <line x1="8" y1="12" x2="21" y2="12"/>
+                <line x1="8" y1="18" x2="21" y2="18"/>
+                <line x1="3" y1="6" x2="3.01" y2="6"/>
+                <line x1="3" y1="12" x2="3.01" y2="12"/>
+                <line x1="3" y1="18" x2="3.01" y2="18"/>
+            </svg>
+            Action Log
+        </span>
+        <button id="log-toggle" title="Toggle log">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="6 9 12 15 18 9"/>
+            </svg>
+        </button>
+    </div>
+    <div class="log-body" id="log-body" aria-live="polite"></div>
+</div>
+```
+
+**Log entry format:**
+
+Each entry consists of a timestamp and a message, rendered in monospace font:
+
+```html
+<div class="log-entry">
+    <span class="log-time">14:32:07</span>
+    <span class="log-add">Added Rectangle 1</span>
+</div>
+```
+
+**Entry types and their CSS class names:**
+
+| Type | Class | Meaning | Color |
+|---|---|---|---|
+| Add | `.log-add` | Object created | `var(--color-text)` (bold) |
+| Delete | `.log-del` | Object removed | `var(--color-text-muted)` (strikethrough) |
+| Edit | `.log-edit` | Property changed | `var(--color-text)` (italic) |
+| Move | `.log-move` | Object repositioned | `var(--color-text)` |
+| System | `.log-sys` | System event (grid toggle, theme change, etc.) | `var(--color-text-muted)` (italic) |
+
+**Log behavior:**
+- **Collapsed by default** (`max-height: 24px` showing only the header).
+- **Expanded to 200px max-height** via `.open` class on `.panel-log`.
+- **Auto-scrolls** to the latest entry when new entries are added.
+- **Maximum 500 entries** — oldest entries are removed when the limit is exceeded.
+- **Announced to screen readers** via `aria-live="polite"` on the log body.
+- **Toggle button** rotates the chevron 180° when expanded.
+
+**Timestamp format:** `HH:MM:SS` (24-hour, zero-padded).
+
+### 8.10 Panel Resize Behavior
+
+The Properties Pane is resizable via a drag handle on its left edge.
+
+**Resize handle:**
+
+```html
+<div id="panel-resize-handle" title="Drag to resize panel"></div>
+```
+
+**Behavior:**
+- **Minimum width:** 120px.
+- **Maximum width:** 600px.
+- **Default width:** 240px (or last saved width from localStorage).
+- **Persisted** in `localStorage` under `[APP_ID]-panel-width`.
+- **Visual feedback:** A 2px vertical indicator line appears in the center of the handle on hover, colored `var(--color-accent)`.
+- **Cursor:** `col-resize` on the handle, `default` elsewhere.
+- **Pointer capture:** Used for smooth drag tracking across the panel and document.
+
+### 8.11 Panel Collapse Behavior
+
+The Properties Pane can collapse to a thin vertical strip for maximum workspace.
+
+**Collapsed state:**
+- **Width:** 40px.
+- **All content hidden** (scroll container, log, tab bar) except the header strip.
+- **Collapse button** remains visible with a rotated chevron icon.
+- **Header strip** is clickable to re-expand the panel.
+- **Persisted** in `localStorage` under `[APP_ID]-panel-collapsed`.
+
+**Expand trigger:**
+- Click the collapsed header strip.
+- Keyboard: `Ctrl+\` (or `Cmd+\` on Mac) toggles collapse.
+
+### 8.12 Responsive Behavior
+
+The properties pane is hidden on narrow screens to preserve workspace:
 
 ```css
 @media (max-width: 768px) {
@@ -1360,7 +1493,154 @@ Applications that require properties on mobile should consider an overlay or bot
 
 ---
 
-## 9. Components
+## 9. Canvas & Workspace
+
+The Canvas is the primary workspace area where users interact with objects. It fills the viewport minus the toolbar and properties pane.
+
+### 9.0 Component Index
+
+| # | Component | ID / Class | Purpose |
+|---|---|---|---|
+| 1 | Canvas Container | `#canvas-container` | Scrollable viewport, receives pointer events |
+| 2 | Canvas | `#canvas` | Transformed coordinate space (zoom/pan) |
+| 3 | Grid Layer | `#grid-layer` | Background grid SVG |
+| 4 | Shapes Layer | `#shapes-layer` | Object rendering layer |
+| 5 | Preview Layer | `#preview-layer` | Temporary visual feedback (selection boxes, snap previews) |
+
+### 9.1 Canvas Container
+
+```css
+#canvas-container {
+    position: fixed;
+    top: 60px;    /* below toolbar */
+    left: 0;
+    right: 0;
+    bottom: 0;
+    overflow: hidden;
+    background: var(--color-oob-bg);
+    touch-action: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+}
+```
+
+- **Position:** Fixed below the toolbar (60px offset).
+- **Overflow:** Hidden — the canvas handles its own coordinate system.
+- **Touch:** `touch-action: none` prevents browser gestures from interfering with canvas interaction.
+- **User select:** Disabled to prevent text selection during drag operations.
+
+### 9.2 Canvas (Transformed Layer)
+
+```css
+#canvas {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    transform-origin: 0 0;
+}
+```
+
+- The canvas is transformed via `translate()` and `scale()` for pan and zoom.
+- `transform-origin: 0 0` ensures transforms are applied from the top-left corner.
+- All object positioning is in **canvas coordinates** (pre-transform).
+
+### 9.3 Layer Hierarchy
+
+Layers are stacked in DOM order (bottom to top):
+
+| Layer | Z-index | Purpose |
+|---|---|---|
+| Grid | 0 | Background grid pattern |
+| Shapes | 1 | Rendered objects |
+| Preview | 3 | Temporary feedback (selection boxes, snap lines) |
+
+### 9.4 Context Menu
+
+A right-click context menu provides object-specific actions.
+
+**HTML structure:**
+
+```html
+<div id="context-menu" class="hidden">
+    <div class="context-item" data-action="duplicate">Duplicate</div>
+    <div class="context-item" data-action="delete">Delete</div>
+    <div class="context-divider"></div>
+    <div class="context-item" data-action="bring-front">Bring to Front</div>
+    <div class="context-item" data-action="bring-forward">Bring Forward</div>
+    <div class="context-item" data-action="send-backward">Send Backward</div>
+    <div class="context-item" data-action="send-back">Send to Back</div>
+    <div class="context-divider"></div>
+    <div class="context-item" data-action="edit-text">Edit Text</div>
+</div>
+```
+
+**Styling:**
+
+```css
+#context-menu {
+    position: fixed;
+    background: var(--color-context-bg);
+    border: 1px solid var(--color-border-input);
+    border-radius: var(--radius-md);
+    padding: var(--space-1);
+    min-width: 160px;
+    z-index: 2000;
+    box-shadow: var(--shadow-lg);
+}
+#context-menu.hidden { display: none; }
+
+.context-item {
+    padding: var(--space-3) var(--space-4);
+    font-size: 16px;
+    color: var(--color-text);
+    cursor: pointer;
+    border-radius: var(--radius-sm);
+    transition: background 0.1s;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+}
+.context-item:hover { background: var(--color-btn-hover-bg); }
+
+.context-divider {
+    height: 1px;
+    background: var(--color-border-input);
+    margin: var(--space-1) var(--space-2);
+}
+```
+
+**Behavior:**
+- **Trigger:** Right-click (`contextmenu` event) on an object or on the canvas (for canvas-level actions).
+- **Position:** Placed at the cursor's screen coordinates.
+- **Close on:** Click outside, Escape key, or any other interaction.
+- **Actions are context-aware:** The available items depend on what was right-clicked (selected object type, selection count, etc.).
+
+### 9.5 Tool Mode System
+
+The App Toolbar includes a set of mutually exclusive tool mode buttons that determine the canvas interaction behavior.
+
+**HTML structure:**
+
+```html
+<button class="tool-btn active" data-tool="select" title="Select (V)">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">…</svg>
+</button>
+<button class="tool-btn" data-tool="line" title="Line (L)">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">…</svg>
+</button>
+```
+
+**Behavior:**
+- **Mutually exclusive:** Only one tool may be active at a time. Clicking a new tool deactivates the current one.
+- **Active state:** `.active` class with accent inset border and accent dot indicator.
+- **Cursor:** The canvas cursor changes based on the active tool (e.g., `default` for Select, `crosshair` for Line).
+- **Keyboard shortcut:** Each tool button has a `title` attribute with the keyboard shortcut (e.g., `title="Select (V)"`). Implement keyboard handling in `app.js`.
+- **Canvas interaction:** The active tool determines pointer event behavior on the canvas:
+  - **Select:** Click to select, drag to move, handles to resize.
+  - **Draw:** Click to place, drag to size.
+  - **Line:** Click on object A, click on object B to connect.
+
+### 9. Components
 
 ### 9.1 Buttons
 
@@ -1639,4 +1919,22 @@ This style guide is the single source of truth for the Free Open Tools ecosystem
 
 ---
 
-*This is a living document. Improvements should raise the bar on simplicity and accessibility — never lower it for the sake of novelty.*
+*This is a living document. Improvements should raise the bar on simplicity and accessibility — never lower it for the sake of novelty.
+
+---
+
+## 17. Pending Convention Questions (To Be Resolved)
+
+The following are known deviations from the style guide for a specific tool. Each entry is a question that needs to be decided and codified into the guide above.
+
+### 17.1 SQL Console — Standalone Tool Pages
+
+**Tool:** `database/sql-console.html`
+
+**Deviation:** This tool is a standalone page with a full fixed toolbar (following §7 conventions) even though it is a single-purpose utility. The mini-tools pattern (§15) specifies a centered layout without fixed toolbar chrome.
+
+**Question:** Should single-purpose interactive tools that require persistent state (a loaded database) and keyboard-driven workflows (Ctrl+Enter to run, resizeable editor) use the full toolbar pattern instead of the mini-tools pattern? Or should the toolbar pattern be formalized as an additional tier between Mini Tools and Full Applications?
+
+**Context:** The SQL Console needs file I/O (New, Open, Export), theme toggle, and a primary Run action — all toolbar-appropriate controls that feel cramped in a mini-tool layout. The toolbar also provides visual consistency with the main database app (`index.html`) which uses the same toolbar pattern.
+
+*This entry is a placeholder for a future style guide update.**
