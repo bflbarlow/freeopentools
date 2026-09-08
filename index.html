@@ -530,6 +530,101 @@
       line-height: 1.6;
     }
 
+    /* License section */
+    .license-section {
+      padding: var(--space-6) 0 var(--space-8);
+    }
+
+    .license-content {
+      max-width: 700px;
+      margin: 0 auto;
+      padding: var(--space-5);
+      background: var(--color-bg-subtle);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+      text-align: left;
+    }
+
+    .license-content h2 {
+      font-size: var(--text-xl);
+      font-weight: 700;
+      margin-bottom: var(--space-3);
+      text-align: center;
+    }
+
+    .license-content h3 {
+      font-size: var(--text-base);
+      font-weight: 700;
+      margin-top: var(--space-4);
+      margin-bottom: var(--space-2);
+    }
+
+    .license-content h4 {
+      font-size: var(--text-sm);
+      font-weight: 600;
+      margin-top: var(--space-3);
+      margin-bottom: var(--space-2);
+    }
+
+    .license-content p {
+      font-size: var(--text-sm);
+      color: var(--color-text-muted);
+      line-height: 1.6;
+      margin-bottom: var(--space-3);
+    }
+
+    .license-content .license-params {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-sm);
+      padding: var(--space-4);
+      margin-bottom: var(--space-4);
+    }
+
+    .license-content .license-params dt {
+      font-size: var(--text-sm);
+      font-weight: 600;
+      margin-top: var(--space-2);
+    }
+
+    .license-content .license-params dt:first-child {
+      margin-top: 0;
+    }
+
+    .license-content .license-params dd {
+      font-size: var(--text-sm);
+      color: var(--color-text-muted);
+      margin-left: 0;
+      margin-bottom: var(--space-2);
+    }
+
+    .license-content .license-params dd:last-child {
+      margin-bottom: 0;
+    }
+
+    .license-credit {
+      font-size: var(--text-xs) !important;
+      color: var(--color-text-disabled) !important;
+      margin-top: var(--space-4) !important;
+      padding-top: var(--space-4);
+      border-top: 1px solid var(--color-border);
+    }
+
+    /* License collapse */
+    .license-collapse {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.4s ease, padding 0.4s ease;
+      padding-top: 0;
+      padding-bottom: 0;
+    }
+
+    .license-collapse.open {
+      max-height: 2000px;
+      padding-top: var(--space-5);
+      padding-bottom: var(--space-5);
+    }
+
     /* Support section */
     .support-section {
       padding: var(--space-6) 0 var(--space-8);
@@ -785,31 +880,90 @@
         &nbsp;·&nbsp;
         <a href="https://buymeacoffee.com/bflbarlow">Support</a>
         &nbsp;·&nbsp;
+        <a href="#license" id="license-toggle">License</a>
+        &nbsp;·&nbsp;
         © Benjamin Barlow
       </p>
     </footer>
+
+    <section id="license" class="license-collapse">
+      <div class="license-content">
+        <h2>License</h2>
+        <div class="license-params">
+          <dl>
+            <dt>Licensor</dt>
+            <dd>Benjamin Barlow</dd>
+            <dt>Licensed Work</dt>
+            <dd>Free Open Tools Suite (including Diagram, Markdown, Layout, Database, and all associated tools and utilities)</dd>
+            <dt>Change Date</dt>
+            <dd>2029-07-27</dd>
+            <dt>Change License</dt>
+            <dd>Apache-2.0</dd>
+            <dt>Additional Use Grant</dt>
+            <dd>You may use the Licensed Work in production environments free of charge, provided you do not offer it as a hosted or managed service to third parties.</dd>
+            <dt>Notes</dt>
+            <dd>This project is open source and free for all to use. Please do not distribute or mimic this software in a manner that does not give proper credit or may confuse users.</dd>
+          </dl>
+        </div>
+
+        <p class="license-credit">License text copyright &copy; 2017 MariaDB Corporation Ab, All Rights Reserved.<br>"Business Source License" is a trademark of MariaDB Corporation Ab.</p>
+
+        <h3>Terms</h3>
+
+        <p>The Licensor hereby grants you the right to copy, modify, create derivative works, redistribute, and make non-production use of the Licensed Work. The Licensor may make an Additional Use Grant, above, permitting limited production use.</p>
+
+        <p>Effective on the Change Date, or the fourth anniversary of the first publicly available distribution of a specific version of the Licensed Work under this License, whichever comes first, the Licensor hereby grants you rights under the terms of the Change License, and the rights granted in the paragraph above terminate.</p>
+
+        <p>If your use of the Licensed Work does not comply with the requirements currently in effect as described in this License, you must purchase a commercial license from the Licensor, its affiliated entities, or authorized resellers, or you must refrain from using the Licensed Work.</p>
+
+        <p>All copies of the original and modified Licensed Work, and derivative works of the Licensed Work, are subject to this License. This License applies separately for each version of the Licensed Work and the Change Date may vary for each version of the Licensed Work released by Licensor.</p>
+
+        <p>You must conspicuously display this License on each original or modified copy of the Licensed Work. If you receive the Licensed Work in original or modified form from a third party, the terms and conditions set forth in this License apply to your use of that work.</p>
+
+        <p>Any use of the Licensed Work in violation of this License will automatically terminate your rights under this License for the current and all other versions of the Licensed Work.</p>
+
+        <p>This License does not grant you any right in any trademark or logo of Licensor or its affiliates (provided that you may use a trademark or logo of Licensor as expressly required by this License).</p>
+
+        <p>TO THE EXTENT PERMITTED BY APPLICABLE LAW, THE LICENSED WORK IS PROVIDED ON AN "AS IS" BASIS. LICENSOR HEREBY DISCLAIMS ALL WARRANTIES AND CONDITIONS, EXPRESS OR IMPLIED, INCLUDING (WITHOUT LIMITATION) WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, NON-INFRINGEMENT, AND TITLE.</p>
+
+        <h4>Covenants of Licensor</h4>
+
+        <p>In consideration of the right to use this License's text and the "Business Source License" name and trademark, Licensor covenants to MariaDB, and to all other recipients of the licensed work to be provided by Licensor:</p>
+
+        <p>1. To specify as the Change License the GPL Version 2.0 or any later version, or a license that is compatible with GPL Version 2.0 or a later version, where "compatible" means that software provided under the Change License can be included in a program with software provided under GPL Version 2.0 or a later version. Licensor may specify additional Change Licenses without limitation.</p>
+
+        <p>2. To either: (a) specify an additional grant of rights to use that does not impose any additional restriction on the right granted in this License, as the Additional Use Grant; or (b) insert the text "None".</p>
+
+        <p>3. To specify a Change Date.</p>
+
+        <p>4. Not to modify this License in any other way.</p>
+      </div>
+    </section>
   </div>
 
-  <!-- Theme toggle (Style Guide §3.1) -->
+  <!-- Theme toggle + License collapse (Style Guide §3.1) -->
   <script>
     (function () {
       var toggle = document.getElementById('theme-toggle');
-      if (!toggle) return;
 
       function applyTheme(theme) {
         document.documentElement.setAttribute('data-theme', theme);
         localStorage.setItem('theme', theme);
-        toggle.setAttribute('aria-label',
-          theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode');
-        toggle.innerHTML = theme === 'dark'
-          ? '<svg class="theme-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>'
-          : '<svg class="theme-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>';
+        if (toggle) {
+          toggle.setAttribute('aria-label',
+            theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode');
+          toggle.innerHTML = theme === 'dark'
+            ? '<svg class="theme-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>'
+            : '<svg class="theme-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>';
+        }
       }
 
-      toggle.addEventListener('click', function () {
-        var current = document.documentElement.getAttribute('data-theme');
-        applyTheme(current === 'dark' ? 'light' : 'dark');
-      });
+      if (toggle) {
+        toggle.addEventListener('click', function () {
+          var current = document.documentElement.getAttribute('data-theme');
+          applyTheme(current === 'dark' ? 'light' : 'dark');
+        });
+      }
 
       // Listen for OS preference changes
       window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function (e) {
@@ -817,6 +971,17 @@
           applyTheme(e.matches ? 'dark' : 'light');
         }
       });
+
+      // License collapse toggle
+      var licenseToggle = document.getElementById('license-toggle');
+      var licenseSection = document.getElementById('license');
+      if (licenseToggle && licenseSection) {
+        licenseToggle.addEventListener('click', function (e) {
+          e.preventDefault();
+          var isOpen = licenseSection.classList.toggle('open');
+          licenseToggle.setAttribute('aria-expanded', isOpen);
+        });
+      }
     })();
   </script>
 </body>
