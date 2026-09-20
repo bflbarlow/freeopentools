@@ -5,6 +5,10 @@ This file will be a directory of what tools are deployed to which URLs for use i
 Github: https://github.com/bflbarlow/diagram
 Future URL:  diagram.freeopentools.com
 
+## DataViz
+Github: https://github.com/bflbarlow/dataviz
+Future URL:  dataviz.freeopentools.com
+
 ## Markdown
 Github: https://github.com/bflbarlow/markdown
 Future URL:  markdown.freeopentools.com

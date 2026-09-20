@@ -407,6 +407,7 @@ Where `<app-id>` is the tool's own lowercase directory name (`diagram`, `layout`
 - **Fix required for `layout`:** rename `theme` → `layout-theme`, `lp-*` → `layout-*` for every key.
 - **Fix required for `database`:** rename `db-builder-name` / `db-builder-session` → `database-name` / `database-session` (or fold into `database-state` — see §7.3).
 - **Legacy key migration:** when renaming a key that may already be populated in real users' browsers (as `diagram` correctly does for its own predecessor `diagramflow-*` keys), read the old key once on `init()`, migrate its value to the new key, and delete the old key. Never leave both an old and new key active simultaneously long-term.
+- **Auto-save file handles** use the key `diagram-fs-handles` (IndexedDB database name) rather than `localStorage` — see §7.8.
 
 ### 7.2 Save Timing — Debounced, Not Synchronous
 
@@ -502,6 +503,106 @@ Every exported JSON document must include a standard metadata envelope alongside
 - **Auto-save includes metadata.** The `localStorage` blob at `<app-id>-state` should also include `app`, `appVersion`, `created`, `modified` alongside the content. This means `saveState()` writes these fields on every auto-save; the overhead is negligible and the benefit (every state blob is self-describing, even inside `localStorage`) is significant.
 - **On import, validate the envelope.** When loading an exported file (§7.5), check for the presence of `app`, `appVersion`, `created`, `modified`, and `content` keys. If the file has no envelope or the envelope is structurally wrong, treat it as an unknown-format file and fall back to the app's default empty state — but still attempt to load `content` directly if the file *looks* like a bare payload (has expected domain keys like `shapes` at the top level). This provides backward compatibility with files exported before this convention was established.
 - **App versioning convention.** The version string lives in a single source of truth: it must be defined as a `VERSION` constant (a `var` declaration) right inside the IIFE, immediately after the opening header comment (§4.1). `saveState()` and the file exporter both reference `VERSION` rather than duplicating the version as a magic string elsewhere in the code.
+
+### 7.7 Multi-Tab Coordination (BroadcastChannel)
+
+Every full application must implement multi-tab coordination to prevent data loss when the same tool is open in multiple browser tabs. Without coordination, two tabs race on the same `localStorage` key and silently overwrite each other's work.
+
+**Technology: `BroadcastChannel` API** — standard in all modern browsers (Chrome, Firefox, Safari 15.4+, Edge). It allows tabs on the same origin to exchange messages in real time with zero server dependency.
+
+**How it works:**
+
+1. **Unique tab identity.** Each tab generates a short random `tabId` on load (`Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 6)`).
+2. **Claim protocol.** On startup, a tab broadcasts a `claim` message and waits 250ms. If no other tab denies the claim, this tab becomes the **editor**. If another tab is already editor, it responds with a `deny` and the new tab enters **read-only mode**.
+3. **Tiebreaker.** If two read-only tabs both try to become editor simultaneously (e.g., the previous editor was closed), the tab with the lexicographically lower `tabId` wins — this is deterministic and avoids a split-brain scenario.
+4. **Release.** When the editor tab closes (`beforeunload` / `pagehide`), it broadcasts a `release` message. Read-only tabs hearing the release attempt to become the new editor.
+5. **State sync.** After every `saveState()` call, the editor broadcasts a `state-changed` message. Read-only tabs reload from `localStorage` to stay in sync. Additionally, the read-only tab listens for `window` `storage` events to catch changes from the editor's `localStorage.setItem()` calls.
+
+**Read-only mode behavior:**
+
+- An orange warning banner appears at the top of the canvas: "Read-only — another tab is editing".
+- CSS class `read-only-mode` is toggled on `<body>`, which dims toolbar buttons (`opacity: 0.4`, `pointer-events: none`) and sets `cursor: not-allowed`.
+- Mutation keyboard shortcuts (Delete, Ctrl+Z/Y/C/V/D, brackets) are blocked.
+- The context menu is suppressed.
+- Canvas pointer events (`pointerdown`) return early.
+- Zoom, pan, theme toggle, and panel collapse still work normally.
+- `scheduleSave()` returns early — read-only tabs never write to `localStorage`.
+
+**State fields required in `S`:**
+
+```js
+readOnly: false,          // true when another tab is the editor
+channel: null,            // BroadcastChannel instance
+tabId: '',                // unique tab identifier
+```
+
+**Required functions:**
+
+```js
+setupBroadcastChannel()   // Create channel, wire message handlers, issue initial claim
+setReadOnly(bool, hint)   // Toggle read-only mode, update banner and body class
+loadFromLocalStorage()    // Reload state from localStorage (used by read-only tabs)
+broadcastStateChange()    // Called after saveState() — notifies other tabs
+releaseChannel()          // Called on unload — broadcasts release, closes channel
+```
+
+**Integration points:**
+
+- Call `setupBroadcastChannel()` during `init()`, after theme but before state restore.
+- Call `releaseChannel()` from `beforeunload`, `pagehide`, and `visibilitychange` (when hidden).
+- Guard `scheduleSave()`: `if (S.readOnly) return;`.
+- Guard `pointerdown` on the canvas container: `if (S.readOnly) return;`.
+- Guard mutation keyboard shortcuts.
+- Guard `contextmenu` event.
+- Patch `saveState` to call `broadcastStateChange()` after every write.
+
+**Reference implementation:** `diagram/app.js` (the first app to implement this standard).
+
+### 7.8 File System Access API Auto-Save
+
+Full applications should support auto-saving directly to a native OS file using the File System Access API, bypassing `localStorage` for users on supported browsers (Chrome, Edge). This provides automatic, lossless persistence to the user's hard drive with no manual downloads.
+
+**Browser support:** Chrome and Edge fully support `window.showSaveFilePicker()`. Firefox and Safari do not. The feature must degrade gracefully — the manual save/download button remains the fallback for unsupported browsers.
+
+**How it works:**
+
+1. **First activation.** The user clicks the Save button. If the File System Access API is available and auto-save is not yet enabled, the app calls `window.showSaveFilePicker()` to prompt for a save location. The returned `FileSystemFileHandle` is stored in both memory (`S.autoSaveFileHandle`) and IndexedDB for persistence across sessions.
+2. **Ongoing writes.** Once a handle is granted, every `saveState()` call also writes the full document JSON to the OS file via `handle.createWritable()`. No additional prompts are shown — the permission persists as long as the tab is open.
+3. **Handle persistence.** The `FileSystemFileHandle` is serializable in Chrome — it is stored in a dedicated IndexedDB database (`<app-id>-fs-handles`) and restored on page load. Permission is re-verified on restore via `handle.queryPermission({ mode: 'readwrite' })`.
+4. **Subsequent Save clicks.** If auto-save is active, clicking Save triggers a manual download as a backup (belt-and-suspenders). If auto-save is not active, clicking Save initiates the picker.
+5. **Visual indicator.** A small green dot (6×6px, `var(--color-success)`) appears on the Save button when auto-save is active. The dot is positioned absolutely, centered below the button with `bottom: -1px`. No animation — static and unobtrusive.
+
+**Graceful fallback:** On Firefox/Safari, the Save button simply triggers a browser download (the classic behavior). No error is shown — the feature is silently absent.
+
+**State fields required in `S`:**
+
+```js
+autoSaveFileHandle: null,  // FileSystemFileHandle, or null if not active
+```
+
+**Required functions:**
+
+```js
+fsApiSupported()           // Returns typeof window.showSaveFilePicker === 'function'
+openAutoSaveDB()           // Opens/creates the IndexedDB for handle persistence
+storeFileHandle(handle)    // Persists handle to IndexedDB
+loadFileHandle()           // Restores handle from IndexedDB
+clearFileHandle()          // Removes handle from IndexedDB
+writeToAutoSaveFile()      // Writes current state to the OS file via the handle
+updateAutoSaveUI()         // Shows/hides the green dot, updates button tooltip
+startAutoSave()            // Opens picker, stores handle, begins auto-saving
+restoreAutoSaveHandle()    // Called on init() to restore a previously-saved handle
+```
+
+**Integration points:**
+
+- Call `restoreAutoSaveHandle()` during `init()`.
+- Patch `saveState` to call `writeToAutoSaveFile()` after the `localStorage` write, guarded by `if (S.autoSaveFileHandle && !S.readOnly)`.
+- The Save button handler checks `S.autoSaveFileHandle` — if set, download a backup; if not set and API is available, call `startAutoSave()`; otherwise download.
+
+**IndexedDB schema:** Database name `<app-id>-fs-handles`, version 1, one object store `handles`, single entry with key `'current-handle'`.
+
+**Reference implementation:** `diagram/app.js` (the first app to implement this standard).
 
 ---
 
@@ -749,9 +850,10 @@ This section is the concrete, per-app punch list for bringing `diagram`, `layout
 
 ### 14.1 diagram
 
-Closest to conformant already — it is the primary reference implementation this guide's `app.js` structure (§4), state (§5), and persistence (§7) sections are modeled on.
+Closest to conformant already — it is the primary reference implementation this guide's `app.js` structure (§4), state (§5), persistence (§7), multi-tab coordination (§7.7), and File System Access API auto-save (§7.8) sections are modeled on.
 
-- [ ] **P2:** Consolidate any remaining inline magic numbers into `CONFIG` if found on re-audit.
+- [x] **Done:** Multi-tab coordination via `BroadcastChannel` implemented.
+- [x] **Done:** File System Access API auto-save integrated into the Save button.
 - [ ] **P3:** No structural changes required otherwise. Use as the reference when other apps are migrated.
 
 ### 14.2 layout
@@ -803,6 +905,9 @@ This checklist complements Style Guide §14 (which covers visual/UX/accessibilit
 - [ ] Render functions never mutate state; state mutation never happens inside a render function (§6.2).
 - [ ] DOM lookups are cached once into named variables, never repeated inside loops or handlers (§4.5).
 - [ ] Pointer Events (not separate mouse/touch handlers) are used for any drag/draw canvas interaction (§4.6).
+- [ ] Multi-tab coordination via `BroadcastChannel` is implemented — read-only mode, claim/deny/release protocol (§7.7).
+- [ ] File System Access API auto-save is implemented with graceful fallback for unsupported browsers (§7.8).
+- [ ] Read-only banner is present in `index.html` with id `readonly-banner` (§7.7).
 - [ ] Naming conventions (§10) are followed for all new identifiers — especially: no app-name abbreviations anywhere.
 
 ---
